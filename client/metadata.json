@@ -1,0 +1,8 @@
+{
+  "name": "mastewal",
+  "description": "A private independent bookstore application with a RAG-powered chatbot and administrative document management system.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
