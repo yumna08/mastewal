@@ -14,7 +14,7 @@ export const setUnauthorizedHandler = (handler: UnauthorizedHandler) => {
 };
 
 export const getApiBaseUrl = () => {
-  const base = 'http://localhost:4000'; // Default for development
+  const base = 'https://mastewal-1.onrender.com'; // Default for development
   return base.replace(/\/$/, '');
 };
 
