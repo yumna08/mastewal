@@ -94,15 +94,16 @@ if (fs.existsSync(frontendPath)) {
   console.log('Dist contents:', fs.readdirSync(frontendPath));
 }
 
-// Serve static files with proper caching
+// Serve static files WITHOUT automatic 404 responses - use fallthrough to continue to next handler
 app.use(express.static(frontendPath, { 
   maxAge: '1d',
   etag: false,
-  index: false,  // Don't auto-serve index.html, we'll handle it manually
+  index: false,  // Don't auto-serve index.html
+  fallthrough: true,  // CRITICAL: fall through to next handler instead of 404
   extensions: ['html', 'js', 'css', 'json', 'png', 'jpg', 'gif', 'svg', 'woff', 'woff2']
 }));
 
-// Fallback to index.html for client-side routing (must be after all API and static routes)
+// Fallback to index.html for client-side routing (MUST be after static but this is our catch-all)
 app.get('*', (req, res) => {
   const indexPath = path.join(frontendPath, 'index.html');
   
