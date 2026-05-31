@@ -14,8 +14,9 @@ export const setUnauthorizedHandler = (handler: UnauthorizedHandler) => {
 };
 
 export const getApiBaseUrl = () => {
-  const base = 'http://localhost:4000'; // Default for development
-  return base.replace(/\/$/, '');
+  // In production, use relative paths (same origin as frontend)
+  // In development, use localhost
+  return import.meta.env.PROD ? '' : 'http://localhost:4000';
 };
 
 export const getAuthToken = () => localStorage.getItem(TOKEN_KEY);

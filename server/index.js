@@ -15,32 +15,35 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'https://mastewal-one.vercel.app';
-const DEV_ORIGINS = new Set([
+
+const CLIENT_ORIGINS = [
+  'https://mastewal-1.onrender.com',
+  'https://mastewal-one.vercel.app',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174'
-]);
+];
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ================= DB CONNECTION =================
 await connectDb();
 await ensureVectorIndex();
 
+// ================= CORS =================
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) {
+      if (!origin) return callback(null, true);
+      
+      if (CLIENT_ORIGINS.includes(origin)) {
         return callback(null, true);
       }
 
-      if (origin === CLIENT_ORIGIN || DEV_ORIGINS.has(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`CORS blocked for origin ${origin}`));
+      console.warn(`CORS blocked for origin: ${origin}`);
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -48,6 +51,7 @@ app.use(
   })
 );
 
+// ================= MIDDLEWARE =================
 app.use(express.json({ limit: '1mb' }));
 
 if (process.env.LOG_MEMORY === 'true') {
@@ -62,6 +66,8 @@ if (process.env.LOG_MEMORY === 'true') {
   });
 }
 
+// ================= ROUTES =================
+// Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -70,25 +76,50 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Mount API routes under /api to match frontend expectations
+// API routes (must come before static/fallback routes)
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/admin', authMiddleware, adminRoutes);
 app.use('/api/chat', authMiddleware, chatRoutes);
 
+// Upload files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
+// Serve frontend static files from client/dist
+const frontendPath = path.join(__dirname, '../client/dist');
+
+// Debug logging
+console.log('Frontend path:', frontendPath);
+
+app.use(express.static(frontendPath, { 
+  maxAge: '1d',
+  etag: false,
+  index: false  // Don't auto-serve index.html for directory requests
+}));
+
+// Fallback to index.html for client-side routing (must be last before error handlers)
+app.get('*', (req, res) => {
+  const indexPath = path.join(frontendPath, 'index.html');
+  console.log('Serving index.html for route:', req.path, 'from:', indexPath);
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error serving index.html:', err.message);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Could not serve application' });
+      }
+    }
+  });
 });
 
+// ================= ERROR HANDLING =================
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   if (res.headersSent) return next(err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+// ================= START SERVER =================
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
-
