@@ -3,7 +3,7 @@ services:
     name: mastewal
     env: node
     region: oregon
-    buildCommand: npm install --prefix client && npm run build --prefix client && npm install --prefix server
+    buildCommand: bash build.sh
     startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
