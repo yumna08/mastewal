@@ -3,7 +3,7 @@ services:
     name: mastewal
     env: node
     region: oregon
-    buildCommand: cd client && npm install && npm run build && cd ../server && npm install
+    buildCommand: cd client && npm install && npm run build && cd ../server && npm install && ls -la ../client/dist/
     startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
