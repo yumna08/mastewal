@@ -130,14 +130,7 @@ app.get('*', (req, res) => {
 });
 
 // ================= ERROR HANDLING =================
-app.use((req, res) => {
-  // Check if res.headersSent (route already sent a response)
-  if (res.headersSent) return;
-  
-  console.log('404 - Unmatched request:', req.method, req.path);
-  res.status(404).json({ error: 'Not found' });
-});
-
+// This middleware only catches errors from route handlers, not missing routes
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   if (res.headersSent) return next(err);
