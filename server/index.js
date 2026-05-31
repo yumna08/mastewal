@@ -109,13 +109,29 @@ app.get('*', (req, res) => {
   // Check if index.html exists
   if (!fs.existsSync(indexPath)) {
     console.error('index.html not found at:', indexPath);
-    console.error('Frontend dist path contents:', fs.existsSync(frontendPath) ? fs.readdirSync(frontendPath) : 'dist folder does not exist');
-    return res.status(500).json({ 
-      error: 'Frontend not built',
-      details: 'index.html not found at ' + indexPath,
-      dist_exists: fs.existsSync(frontendPath),
-      dist_path: frontendPath
-    });
+    console.log('Frontend dist files:', fs.existsSync(frontendPath) ? fs.readdirSync(frontendPath) : 'dist does not exist');
+    
+    // Fallback: serve a minimal HTML that loads from a CDN or shows error
+    const fallbackHTML = `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mastewal Books</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      console.error('Frontend build missing. Server logs:', {
+        dist_path: '${frontendPath}',
+        dist_exists: ${fs.existsSync(frontendPath)},
+        error: 'index.html not found'
+      });
+      document.body.innerHTML = '<div style="padding:20px;font-family:sans-serif"><h1>⚠️ Frontend Build Missing</h1><p>The frontend application build was not found. This is a deployment configuration issue.</p><ul><li>Dist path: ${frontendPath}</li><li>Dist exists: ${fs.existsSync(frontendPath)}</li></ul></div>';
+    </script>
+  </body>
+</html>`;
+    return res.type('text/html').send(fallbackHTML);
   }
   
   console.log('Serving index.html for route:', req.path);
@@ -123,7 +139,7 @@ app.get('*', (req, res) => {
     if (err && err.code !== 'EISDIR') {
       console.error('Error serving index.html for route', req.path + ':', err.message);
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Error loading application' });
+        res.status(500).send('<h1>Error loading application</h1><pre>' + err.message + '</pre>');
       }
     }
   });
