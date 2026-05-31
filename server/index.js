@@ -85,25 +85,40 @@ app.use('/api/chat', authMiddleware, chatRoutes);
 // Upload files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Serve frontend static files from client/dist
+// Serve frontend static files
 const frontendPath = path.join(__dirname, '../client/dist');
-
-// Debug logging
 console.log('Frontend path:', frontendPath);
+console.log('Frontend dist exists:', require('fs').existsSync(frontendPath));
 
+// Serve static files with proper caching
 app.use(express.static(frontendPath, { 
   maxAge: '1d',
   etag: false,
-  index: false  // Don't auto-serve index.html for directory requests
+  index: false,  // Don't auto-serve index.html, we'll handle it manually
+  extensions: ['html', 'js', 'css', 'json', 'png', 'jpg', 'gif', 'svg', 'woff', 'woff2']
 }));
 
-// Fallback to index.html for client-side routing (must be last before error handlers)
-app.get('*', (req, res) => {
+// Debug: Log all requests to root
+app.get('/', (req, res) => {
+  console.log('GET / requested');
   const indexPath = path.join(frontendPath, 'index.html');
-  console.log('Serving index.html for route:', req.path, 'from:', indexPath);
   res.sendFile(indexPath, (err) => {
     if (err) {
-      console.error('Error serving index.html:', err.message);
+      console.error('Error sending index.html:', err.message);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to load index.html' });
+      }
+    }
+  });
+});
+
+// Catch-all for client-side routing (must be after all API and static routes)
+app.get('*', (req, res) => {
+  const indexPath = path.join(frontendPath, 'index.html');
+  console.log('Fallback route hit for:', req.path);
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error serving index.html for route', req.path + ':', err.message);
       if (!res.headersSent) {
         res.status(500).json({ error: 'Could not serve application' });
       }
