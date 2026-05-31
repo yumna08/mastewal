@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "node index.js",
     "start": "NODE_ENV=production node index.js",
-    "seed:books": "node scripts/seedBooks.js"
+    "seed:books": "node scripts/seedBooks.js",
+    "seed:admin": "node scripts/seedAdmin.js"
   },
   "dependencies": {
     "@google/genai": "^1.41.0",

@@ -17,12 +17,12 @@ const LoginPage: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const googleButtonRef = React.useRef<HTMLDivElement | null>(null);
-  const [isGoogleEnabled] = React.useState(Boolean('514542200196-k4uubjntd1lroh17j1rf53h9v6g35aam.apps.googleusercontent.com'));
+  const [isGoogleEnabled] = React.useState(Boolean('442110316859-03tll2tj00lmr9g5pot7l2j48kn3fsp7.apps.googleusercontent.com'));
   const { login, loginWithGoogle } = useAuthStore();
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    const clientId = '514542200196-k4uubjntd1lroh17j1rf53h9v6g35aam.apps.googleusercontent.com';
+    const clientId = '442110316859-03tll2tj00lmr9g5pot7l2j48kn3fsp7.apps.googleusercontent.com';
     if (!clientId) {
       return;
     }

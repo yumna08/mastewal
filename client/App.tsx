@@ -4,6 +4,7 @@ import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'reac
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
+import BookDetailPage from './pages/BookDetailPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import { useAuthStore } from './store/useStore';
@@ -55,14 +56,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            } 
-          />
+          <Route path="/" element={<HomePage />} />
           <Route 
             path="/admin" 
             element={
@@ -71,6 +65,7 @@ const App: React.FC = () => {
               </AdminRoute>
             } 
           />
+          <Route path="/books/:id" element={<BookDetailPage />} />
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

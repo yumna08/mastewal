@@ -30,4 +30,19 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id).lean();
+
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    res.json({ book });
+  } catch (err) {
+    console.error('Get book error:', err);
+    res.status(500).json({ error: 'Failed to fetch book' });
+  }
+});
+
 export default router;
