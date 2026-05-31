@@ -89,7 +89,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve frontend static files
 const frontendPath = path.join(__dirname, '../client/dist');
 console.log('Frontend path:', frontendPath);
-console.log('Frontend dist exists:', require('fs').existsSync(frontendPath));
+console.log('Frontend dist exists:', fs.existsSync(frontendPath));
+if (fs.existsSync(frontendPath)) {
+  console.log('Dist contents:', fs.readdirSync(frontendPath));
+}
 
 // Serve static files with proper caching
 app.use(express.static(frontendPath, { 
@@ -99,35 +102,42 @@ app.use(express.static(frontendPath, {
   extensions: ['html', 'js', 'css', 'json', 'png', 'jpg', 'gif', 'svg', 'woff', 'woff2']
 }));
 
-// Debug: Log all requests to root
-app.get('/', (req, res) => {
-  console.log('GET / requested');
-  const indexPath = path.join(frontendPath, 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('Error sending index.html:', err.message);
-      if (!res.headersSent) {
-        res.status(500).json({ error: 'Failed to load index.html' });
-      }
-    }
-  });
-});
-
-// Catch-all for client-side routing (must be after all API and static routes)
+// Fallback to index.html for client-side routing (must be after all API and static routes)
 app.get('*', (req, res) => {
   const indexPath = path.join(frontendPath, 'index.html');
-  console.log('Fallback route hit for:', req.path);
+  
+  // Check if index.html exists
+  if (!fs.existsSync(indexPath)) {
+    console.error('index.html not found at:', indexPath);
+    console.error('Frontend dist path contents:', fs.existsSync(frontendPath) ? fs.readdirSync(frontendPath) : 'dist folder does not exist');
+    return res.status(500).json({ 
+      error: 'Frontend not built',
+      details: 'index.html not found at ' + indexPath,
+      dist_exists: fs.existsSync(frontendPath),
+      dist_path: frontendPath
+    });
+  }
+  
+  console.log('Serving index.html for route:', req.path);
   res.sendFile(indexPath, (err) => {
-    if (err) {
+    if (err && err.code !== 'EISDIR') {
       console.error('Error serving index.html for route', req.path + ':', err.message);
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Could not serve application' });
+        res.status(500).json({ error: 'Error loading application' });
       }
     }
   });
 });
 
 // ================= ERROR HANDLING =================
+app.use((req, res) => {
+  // Check if res.headersSent (route already sent a response)
+  if (res.headersSent) return;
+  
+  console.log('404 - Unmatched request:', req.method, req.path);
+  res.status(404).json({ error: 'Not found' });
+});
+
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   if (res.headersSent) return next(err);
